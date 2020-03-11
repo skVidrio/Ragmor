@@ -1,0 +1,61 @@
+# Boss - Create / Delete / Edit / List
+# Boss Edit - Health [click for single increment, shift click for increments of 10], Speed [click for single increment], Rewards (xp or items), Equipment
+	# updateEditGUI(player)
+# Boss Animation - Falling Blocks, Totem + Flash Particle, Bossbar
+# Health Bossbar
+options:
+	boss-prefix: &3&lBOSS &b&kI &7
+	boss-color: &b
+	boss-subcolor: &b
+	boss-text: &7
+command /boss [<string>] [<string>]:
+	trigger:
+		# Insert Permission Check
+		1 = 1:
+			arg 1 is set:
+				arg 1 is "create", "delete" or "list":
+					arg 1 = "create":
+						arg 2 isn't set:
+							set {_error} to "all fields must be supplied"
+						{-bossList::*} contains arg 2:
+							set {_error} to "a boss with that ID already exists"
+						{_error} isn't set:
+							send "&f"
+							send "{@boss-prefix}Create %arg 2%."
+					arg 1 = "delete":
+						arg 2 isn't set:
+							set {_error} to "all fields must be supplied"
+						{-bossList::*} does not contain arg 2:
+							set {_error} to "a boss with that ID does not exist"
+						{_error} isn't set:
+							send "&f"
+							send "{@boss-prefix}Delete %arg 2%."
+					arg 1 = "list":
+						arg 2 isn't set:
+							set {_error} to "all fields must be supplied"
+						{-bossList::*} is set:
+							# Change Size + Fix List
+							send "{@boss-prefix}Listing all existing bosses &f&o(%size of {-bossList::*}%&f&o){@text}:"
+						else:
+							send "&c&oThere are no existing bosses."
+					arg 1 = "edit":
+						arg 2 isn't set:
+							set {_error} to "all fields must be supplied"
+						{-bossList::*} does not contain arg 2:
+							set {_error} to "a boss with that ID does not exist"
+						{_error} isn't set:
+							send "{@boss-prefix}Editting %arg 2%."
+					{_error} is set:
+						send "{@npc-prefix}Error: %{_error}%!"
+				else:
+					player command "/boss"
+			else:
+				send " "
+				send formatted "{@boss-color}&lBoss Edit"
+				send formatted "{@boss-subcolor}/boss create [ID] {@boss-text}Create a boss."
+				send formatted "{@boss-subcolor}/boss delete [ID] {@boss-text}Delete a boss."
+				send formatted "{@boss-subcolor}/boss edit [ID] {@boss-text}Edit the attributes of a boss."
+				send " "
+				send formatted "{@boss-subcolor}/boss list [ID] {@boss-text}List all existing bosses."
+		else:
+			send "&cYou cannot execute this command!"
