@@ -54,7 +54,7 @@ command /boss [<string>] [<string>]:
 				send formatted "{@boss-color}&lBoss Edit"
 				send formatted "{@boss-subcolor}/boss create [ID] {@boss-text}Create a boss."
 				send formatted "{@boss-subcolor}/boss delete [ID] {@boss-text}Delete a boss."
-				send formatted "{@boss-subcolor}/boss edit [ID] {@boss-text}Edit the attributes of a boss."
+				send formatted "{@boss-subcolor}/boss edit [ID] {@boss-text}Modify the attributes of a boss."
 				send " "
 				send formatted "{@boss-subcolor}/boss list [ID] {@boss-text}List all existing bosses."
 		else:
