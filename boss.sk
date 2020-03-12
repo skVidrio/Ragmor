@@ -1,52 +1,153 @@
 # Boss - Create / Delete / Edit / List
-# Boss Edit - Health [click for single increment, shift click for increments of 10], Speed [click for single increment], Rewards (xp or items), Equipment
+# Boss Edit - Name, Health [click for single increment, shift click for increments of 10], Speed [click for single increment], Rewards (xp or items), Equipment
 	# updateEditGUI(player)
 # Boss Animation - Falling Blocks, Totem + Flash Particle, Bossbar
 # Health Bossbar
+
+# {-boss::ID::name}
+# {-boss::ID::health}
+# {-boss::ID::speed}
+# {-boss::ID::rewards::*}
+# {-boss::ID::xpReward}
+# {-bossList::*} <-- contains IDs
 options:
 	boss-prefix: &3&lBOSS &b&kI &7
 	boss-color: &b
 	boss-subcolor: &b
 	boss-text: &7
+function lore(lore: string) :: strings:
+	set {_lore::*} to {_lore} split at "||"
+	return {_lore::*}
+function updateEditGui(p: player, id: string):
+	set {_fill::*} to all integers between 0 and 35
+	remove all integers between 12 and 17 from {_fill::*}
+	loop {_fill::*}:
+		format gui slot {_fill::%loop-index%} of {_p} with gray stained glass pane named " " to do nothing
+	format gui slot 1 of {_p} with oak wood floor sign named " " with lore lore("{@boss-color}ID: &f%{_id}%||||&fYou are now editing||&f%{_id}%'s attributes. Select an||&foption on the right.") to do nothing
+	format gui slot 3 of {_p} with nametag named " " with lore lore("{@boss-subcolor}&lNAME||||&fCurrent name: %{-boss::%{_id}%::name}%||&fChange the name of boss %{_id}%.||||||{@boss-color}Left click to increase by one||{@boss-color}Shift-left click to increase by ten||{@boss-subcolor}Right click to decrease by one||{@boss-subcolor}Shift-right click to decrease by ten") to run:
+		edittingAttribute({_p}, {_id}, "NAME", "%click type%")
+	format gui slot 4 of {_p} with healing tipped arrow named " " with lore lore("{@boss-subcolor}&lHEALTH||||&fCurrent health modifier: %{-boss::%{_id}%::health}%||&fChange the health of boss %{_id}%.||||||{@boss-color}Left click to increase by one||{@boss-color}Shift-left click to increase by ten||{@boss-subcolor}Right click to decrease by one||{@boss-subcolor}Shift-right click to decrease by ten") to run:
+		edittingAttribute({_p}, {_id}, "HEALTH", "%click type%")
+	format gui slot 5 of {_p} with iron boots named " " with lore lore("{@boss-subcolor}&lSPEED||||&fCurrent speed modifier: %{-boss::%{_id}%::speed}%||&fChange the speed of boss %{_id}%.||||||{@boss-color}Left click to increase by one||{@boss-color}Shift-left click to increase by ten||{@boss-subcolor}Right click to decrease by one||{@boss-subcolor}Shift-right click to decrease by ten") to run:
+		edittingAttribute({_p}, {_id}, "SPEED", "%click type%")
+	format gui slot 10 of {_p} with oak wood floor sign named " " with lore lore("{@boss-color}&lEQUIPMENT||||&fEdit a %{_id}%'s equipment.")
+	format gui slot 28 of {_p} with paper named " " with lore lore("{@boss-color}&lREWARDS||||&fPlace items in the space below||&fto add them to the boss's rewards.||||&7&oLowest percent chance: 5.5%%") to do nothing
+	format gui slot 29 of {_p} with bottle o' enchanting named " " with lore lore("{@boss-subcolor}&lXP REWARDS||||&fCurrent XP reward: %{-boss::%{_id}%::xpReward}%||&fChange the XP reward of a boss.||||||{@boss-color}Left click to increase by one||{@boss-color}Shift-left click to increase by ten||{@boss-subcolor}Right click to decrease by one||{@boss-subcolor}Shift-right click to decrease by ten") to run:
+		edittingAttribute({_p}, {_id}, "XP Reward", "%click type%")	
+	{-boss::%{_id}%::rewards::*} is set:
+		set {_rewards::*} to all integers between 36 and 53
+		loop {-boss::%{_id}%::rewards::*}:
+			set slot {_rewards::%loop-index%} of {_p}'s current inventory to loop-value
+	{-boss::%{_id}%::equipment::*} is set:
+		set {_equipment::*} to all integers between 12 and 17	
+		loop {-boss::%{_id}%::equipment::*}:
+			set slot {_equipment::%loop-index%} of {_p}'s current inventory to loop-value
+function edittingAttribute(p: player, id: string, attribute: string, clicktype: string):
+	{_attribute} = "name":
+		send "{@boss-prefix}Chat prompt system will be added soon(TM)!" to {_p}
+	else:
+		play sound "block.note_block.pling" with pitch 1 to {_p}
+		{_clicktype} = "left mouse button":
+			set {_increment} to 1
+		{_clicktype} = "left mouse button with shift":
+			set {_increment} to 10
+		{_clicktype} = "right mouse button":
+			set {_increment} to -1
+		{_clicktype} = "right mouse button with shift":
+			set {_increment} to -10
+		{_attribute} = "HEALTH":
+			{-boss::%{_id}%::health} + {_increment} >= 0:
+				add {_increment} to {-boss::%{_id}%::health}
+			else:
+				set {-boss::%{_id}%::health} to 0	
+		{_attribute} = "SPEED":
+			{-boss::%{_id}%::speed} + {_increment} >= 0:
+				add {_increment} to {-boss::%{_id}%::speed}
+			else:
+				set {-boss::%{_id}%::speed} to 0
+		{_attribute} = "XP Reward":
+			{-boss::%{_id}%::xpReward} + {_increment} >= 0:
+				add {_increment} to {-boss::%{_id}%::xpReward}
+			else:
+				set {-boss::%{_id}%::xpReward} to 0	
+		remove bossbar "bossEdit_%{_p}%"
+		create bossbar titled "{@boss-prefix}Modified {@boss-subcolor}&l%{_attribute}%{@boss-text} attribute of {@boss-color}%{_id}%{@boss-text}. Action: {@boss-subcolor}&l%{_increment}%" and id "bossEdit_%{_p}%" for {_p} with progress 100 with colors blue
+		updateEditGui({_p}, {_id})
+on inventory close:
+	inventory name of player's current inventory contains "❖ Editting":
+		remove bossbar "bossEdit_%player%"
+		set {_name} to inventory name of player's current inventory
+		set {_name::*} to {_name} split at " "
+		set {_id} to {_name::3}
+		delete {-boss::%{_id}%::rewards::*}
+		delete {-boss::%{_id}%::equipment::*}
+		set {_rewards::*} to all integers between 36 and 53
+		loop {_rewards::*}:
+			add slot loop-value of player's current inventory to {-boss::%{_id}%::rewards::*}
+		set {_armor::*} to all integers between 12 and 17
+		loop {_armor::*}:
+			add slot loop-value of player's current inventory to {-boss::%{_id}%::equipment::*}
+quit:
+	remove bossbar "bossEdit_%player%"
+on tool change:
+	inventory name of player's current inventory contains "❖ Editting":
+		cancel event
 command /boss [<string>] [<string>]:
 	trigger:
 		# Insert Permission Check
 		1 = 1:
 			arg 1 is set:
-				arg 1 is "create", "delete" or "list":
+				arg 1 is "create", "delete", "edit" or "list":
 					arg 1 = "create":
 						arg 2 isn't set:
 							set {_error} to "all fields must be supplied"
-						{-bossList::*} contains arg 2:
-							set {_error} to "a boss with that ID already exists"
+						else:
+							arg 2 does not match "[a-zA-Z]+":
+								set {_error} to "Boss IDs can only contain letters"
+							{-bossList::*} contains arg 2:
+								set {_error} to "a boss with that ID already exists"
+							length of arg 2 > 15:
+								set {_error} to "Boss IDs can only be 15 characters long"
 						{_error} isn't set:
+							set {-boss::%arg 2%::name} to arg 2
+							set {-boss::%arg 2%::health} to 10
+							set {-boss::%arg 2%::speed} to 0
+							set {-boss::%arg 2%::rewards::*} to air
+							set {-boss::%arg 2%::xpReward} to 10
+							add arg 2 to {-bossList::*}
 							send "&f"
-							send "{@boss-prefix}Create %arg 2%."
+							send "{@boss-prefix}Boss %arg 2%{@boss-text} has been created successfully!"
+							send "&f"
 					arg 1 = "delete":
 						arg 2 isn't set:
 							set {_error} to "all fields must be supplied"
-						{-bossList::*} does not contain arg 2:
-							set {_error} to "a boss with that ID does not exist"
+						else:
+							{-bossList::*} does not contain arg 2:
+								set {_error} to "a boss with that ID does not exist"
 						{_error} isn't set:
+							delete {-boss::%arg 2%::*}
+							remove arg 2 from {-bossList::*}
 							send "&f"
-							send "{@boss-prefix}Delete %arg 2%."
+							send "{@boss-prefix}Boss %arg 2%{@boss-text} has been deleted."
 					arg 1 = "list":
-						arg 2 isn't set:
-							set {_error} to "all fields must be supplied"
 						{-bossList::*} is set:
 							# Change Size + Fix List
-							send "{@boss-prefix}Listing all existing bosses &f&o(%size of {-bossList::*}%&f&o){@text}:"
+							send formatted "{@boss-prefix}Listing all existing bosses &f&o(%size of {-bossList::*}%&f&o){@boss-text}:"
+							send formatted "{@boss-text}%{-bossList::*}%"
 						else:
 							send "&c&oThere are no existing bosses."
 					arg 1 = "edit":
 						arg 2 isn't set:
 							set {_error} to "all fields must be supplied"
-						{-bossList::*} does not contain arg 2:
-							set {_error} to "a boss with that ID does not exist"
+						else:
+							{-bossList::*} does not contain arg 2:
+								set {_error} to "a boss with that ID does not exist"
 						{_error} isn't set:
-							send "{@boss-prefix}Editting %arg 2%."
+							send "{@boss-prefix}Edit interface for {@boss-subcolor}%arg 2%{@boss-text} has been opened."
+							open virtual chest inventory with 6 rows named "❖ Editting %arg 2%" to player
+							updateEditGui(player, arg 2)
 					{_error} is set:
-						send "{@npc-prefix}Error: %{_error}%!"
+						send "{@boss-prefix}Error: %{_error}%!"
 				else:
 					player command "/boss"
 			else:
@@ -56,6 +157,6 @@ command /boss [<string>] [<string>]:
 				send formatted "{@boss-subcolor}/boss delete [ID] {@boss-text}Delete a boss."
 				send formatted "{@boss-subcolor}/boss edit [ID] {@boss-text}Modify the attributes of a boss."
 				send " "
-				send formatted "{@boss-subcolor}/boss list [ID] {@boss-text}List all existing bosses."
+				send formatted "{@boss-subcolor}/boss list {@boss-text}List all existing bosses."
 		else:
 			send "&cYou cannot execute this command!"
